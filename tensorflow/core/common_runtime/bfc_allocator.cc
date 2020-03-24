@@ -357,6 +357,7 @@ void* BFCAllocator::AllocateRawInternal(size_t unused_alignment,
                                         size_t num_bytes,
                                         bool dump_log_on_failure,
                                         uint64 freed_before) {
+  VLOG(1) << "before AllocateRaw: " << RenderOccupancy() <<"\n";
   if (num_bytes == 0) {
     VLOG(2) << "tried to allocate 0 bytes";
     return nullptr;
@@ -376,13 +377,16 @@ void* BFCAllocator::AllocateRawInternal(size_t unused_alignment,
   }
   void* ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
   if (ptr != nullptr) {
+    VLOG(1) << "after  AllocateRaw: " << RenderOccupancy() << "\n";
     return ptr;
   }
 
   // Try to extend
+  VLOG(1) << "Try to extend: ";
   if (Extend(unused_alignment, rounded_bytes)) {
     ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
     if (ptr != nullptr) {
+      VLOG(1) << "after  AllocateRaw: " << RenderOccupancy() << "\n";
       return ptr;
     }
   }
@@ -395,6 +399,7 @@ void* BFCAllocator::AllocateRawInternal(size_t unused_alignment,
     if (MergeTimestampedChunks(rounded_bytes)) {
       ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
       if (ptr != nullptr) {
+        VLOG(1) << "after  AllocateRaw: " << RenderOccupancy() << "\n";
         return ptr;
       }
     }
@@ -408,6 +413,7 @@ void* BFCAllocator::AllocateRawInternal(size_t unused_alignment,
       Extend(unused_alignment, rounded_bytes)) {
     ptr = FindChunkPtr(bin_num, rounded_bytes, num_bytes, freed_before);
     if (ptr != nullptr) {
+      VLOG(1) << "after  AllocateRaw: " << RenderOccupancy() << "\n";
       return ptr;
     }
   }
@@ -524,9 +530,47 @@ void BFCAllocator::SplitChunk(BFCAllocator::ChunkHandle h, size_t num_bytes) {
 
 void BFCAllocator::DeallocateRaw(void* ptr) {
   VLOG(1) << "DeallocateRaw " << Name() << " "
-          << (ptr ? RequestedSize(ptr) : 0);
+          << (ptr ? RequestedSize(ptr) : 0) <<"\n";
+  VLOG(1) << "before DeallocateRaw: " << RenderOccupancy() <<"\n";
   DeallocateRawInternal(ptr);
+  VLOG(1) << "after  DeallocateRaw: " << RenderOccupancy() << "\n";
   retry_helper_.NotifyDealloc();
+}
+
+void BFCAllocator::GPUMemFree()
+    EXCLUSIVE_LOCKS_REQUIRED(lock_) {
+  VLOG(1) << "====================GPUMemFree====================" << "\n";
+  VLOG(1) << "before DeallocateRegions R: " << RenderOccupancy()<<"\n";
+  // Searching for free regions.
+  absl::flat_hash_set<void*> free_region_ptrs;
+  size_t total_free_bytes = 0;
+  for (const AllocationRegion& region : region_manager_.regions()) {
+    ChunkHandle h = region_manager_.get_handle(region.ptr());
+    bool any_use = false;
+    while (h != kInvalidChunkHandle) {
+      const Chunk* c = ChunkFromHandle(h);
+      if (c->in_use()) {
+        any_use = true;
+        break;
+      }
+      h = c->next;
+    }
+
+    if (!any_use) {
+      VLOG(2) << "Found free region with ptr = " << region.ptr();
+      free_region_ptrs.insert(region.ptr());
+      total_free_bytes += region.memory_size();
+    }
+  }
+
+  if (total_free_bytes == 0) {
+    VLOG(1) << "DeallocateRegions no free region";
+    return;
+  }
+
+  // Deallocate free regions.
+  DeallocateRegions(free_region_ptrs);
+  VLOG(1) << "after  DeallocateRegions R: " << RenderOccupancy()<<"\n";
 }
 
 void BFCAllocator::DeallocateRawInternal(void* ptr) {
@@ -820,6 +864,7 @@ string BFCAllocator::RenderOccupancy() {
 
   // Compute the total region size to render over
   size_t total_region_size = 0;
+  VLOG(1) << "Number of regions "<<region_manager_.regions().size() <<"\n";
   for (const auto& region : region_manager_.regions()) {
     total_region_size += region.memory_size();
   }
@@ -833,7 +878,10 @@ string BFCAllocator::RenderOccupancy() {
                total_region_size, '_');
 
   size_t region_offset = 0;
+  char region_count = '0';
   for (const auto& region : region_manager_.regions()) {
+    RenderRegion(rendered, resolution, total_region_size, region_offset,
+                     nullptr, nullptr, region.memory_size(), region_count++);
     ChunkHandle h = region_manager_.get_handle(region.ptr());
     // Then render each chunk left to right.
     while (h != kInvalidChunkHandle) {

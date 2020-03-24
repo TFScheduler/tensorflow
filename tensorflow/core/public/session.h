@@ -265,6 +265,8 @@ class Session {
     return errors::Unimplemented(
         "ReleaseCallable is not supported for this session.");
   }
+
+  virtual Status GPUMemFree() = 0;
 };
 
 /// \brief Create a new session with the given options.

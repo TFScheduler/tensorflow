@@ -415,6 +415,10 @@ Status SessionRef::Run(const RunOptions& run_options,
                         target_node_names, outputs, run_metadata);
 }
 
+Status SessionRef::GPUMemFree() {
+  return session_->GPUMemFree();
+}
+
 Status SessionRef::Run(const std::vector<std::pair<string, Tensor> >& inputs,
                        const std::vector<string>& output_tensor_names,
                        const std::vector<string>& target_node_names,

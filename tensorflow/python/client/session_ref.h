@@ -59,6 +59,8 @@ class SessionRef : public Session {
                    const std::vector<string>& target_nodes,
                    string* handle) override;
 
+  Status GPUMemFree() override;
+
   Status PRun(const string& handle,
               const std::vector<std::pair<string, Tensor> >& inputs,
               const std::vector<string>& output_names,

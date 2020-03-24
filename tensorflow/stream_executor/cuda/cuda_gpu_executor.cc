@@ -519,6 +519,7 @@ int GpuExecutor::CompareOccupancy(int* initial_blocks,
 }
 
 void* GpuExecutor::Allocate(uint64 size) {
+  VLOG(1) << "GpuExecutor::Allocate\n";
   return GpuDriver::DeviceAllocate(context_, size);
 }
 

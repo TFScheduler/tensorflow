@@ -78,6 +78,10 @@ class GrpcSession : public Session {
              const std::vector<string>& target_node_names,
              std::vector<Tensor>* outputs, RunMetadata* run_metadata) override;
 
+  Status GPUMemFree() override{
+    return Status::OK();
+  }
+  
   Status Extend(const GraphDef& graph) override;
   Status Extend(const RunOptions& run_options, const GraphDef& graph) override;
   Status Extend(GraphDef&& graph) override;

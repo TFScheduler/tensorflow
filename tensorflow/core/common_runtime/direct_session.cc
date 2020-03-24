@@ -19,6 +19,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include <iostream>
+#include "tensorflow/core/common_runtime/bfc_allocator.h"
+
 #include "absl/container/flat_hash_set.h"
 #include "tensorflow/core/common_runtime/collective_executor_mgr.h"
 #include "tensorflow/core/common_runtime/collective_param_resolver_local.h"
@@ -452,6 +455,7 @@ Status DirectSession::Run(const NamedTensorList& inputs,
                           const std::vector<string>& output_names,
                           const std::vector<string>& target_nodes,
                           std::vector<Tensor>* outputs) {
+  VLOG(1) <<"Run() \n";
   RunMetadata run_metadata;
   return Run(RunOptions(), inputs, output_names, target_nodes, outputs,
              &run_metadata);
@@ -764,6 +768,30 @@ Status DirectSession::RunInternal(
     }
   }
   metrics::UpdateGraphExecTime(options_.env->NowMicros() - start_time_usecs);
+
+  return Status::OK();
+}
+
+Status DirectSession::GPUMemFree() {
+  VLOG(1) << "DirectSession::GPUMemFree" ;
+  for (Device* device : devices_) {
+    VLOG(1) << "device ："<<device->name() ;
+    //Allocator* allocator = device
+    GPUDevice *gpu_device = dynamic_cast<GPUDevice*>(device);
+    if(gpu_device!=nullptr){
+      Allocator* allocator = gpu_device->getGPUAllocator();
+      BFCAllocator* bfc_allocator = dynamic_cast<BFCAllocator*>(allocator);
+      if(bfc_allocator!=nullptr){
+        VLOG(1) << "gpu_allocator exist.";
+        bfc_allocator->GPUMemFree();
+      }else{
+        VLOG(1) << "gpu_allocator not exist.";
+      }
+    }else{
+      VLOG(1) << device->name() << "is not a gpu device ：" ;
+    }
+  }
+  
 
   return Status::OK();
 }

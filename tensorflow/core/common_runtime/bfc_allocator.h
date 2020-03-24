@@ -63,6 +63,8 @@ class BFCAllocator : public Allocator {
 
   void DeallocateRaw(void* ptr) override;
 
+  void GPUMemFree();
+
   bool TracksAllocationSizes() const override;
 
   size_t RequestedSize(const void* ptr) const override;
@@ -326,6 +328,8 @@ class BFCAllocator : public Allocator {
     void erase(const void* p) { return MutableRegionFor(p)->erase(p); }
 
     const std::vector<AllocationRegion>& regions() const { return regions_; }
+
+    std::vector<AllocationRegion>& getRegions() { return regions_; }
 
    private:
     static bool Comparator(const void* ptr, const AllocationRegion& other) {

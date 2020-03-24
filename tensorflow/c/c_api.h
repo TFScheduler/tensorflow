@@ -1251,6 +1251,8 @@ TF_CAPI_EXPORT extern void TF_DeleteSession(TF_Session*, TF_Status* status);
 // to the caller, which must eventually call TF_DeleteTensor on them.
 //
 // On failure, output_values[] contains NULLs.
+TF_CAPI_EXPORT extern void TF_GPUMemFree(TF_Session* session);
+
 TF_CAPI_EXPORT extern void TF_SessionRun(
     TF_Session* session,
     // RunOptions

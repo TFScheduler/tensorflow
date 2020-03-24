@@ -44,6 +44,7 @@ limitations under the License.
 #include "tensorflow/core/platform/thread_annotations.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/public/session.h"
+#include "tensorflow/core/common_runtime/gpu/gpu_device.h"
 
 namespace tensorflow {
 
@@ -126,6 +127,8 @@ class DirectSession : public Session {
   ::tensorflow::Status ReleaseCallable(CallableHandle handle) override;
 
   const SessionOptions& options() const { return options_; }
+  
+  ::tensorflow::Status GPUMemFree() override;
 
  private:
   // For access to collective_graph_key_.

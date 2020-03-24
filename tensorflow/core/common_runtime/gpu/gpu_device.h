@@ -126,6 +126,10 @@ class BaseGPUDevice : public LocalDevice {
   // the compute stream and are not yet known to have completed.
   int PendingKernels();
 
+  Allocator* getGPUAllocator(){
+    return gpu_allocator_;
+  }
+
  protected:
   Allocator* gpu_allocator_;  // not owned
   Allocator* cpu_allocator_;  // not owned
@@ -379,6 +383,17 @@ class BaseGPUDeviceFactory : public DeviceFactory {
   // visible_gpu_initialized_[platform_gpu_id] is true if visible GPU
   // platform_gpu_id has been initialized by the process.
   std::unordered_map<int, bool> visible_gpu_initialized_;
+};
+
+class GPUDevice : public BaseGPUDevice{
+  public:
+  GPUDevice(const SessionOptions& options, const string& name,
+            Bytes memory_limit, const DeviceLocality& locality,
+            TfGpuId tf_gpu_id, const string& physical_device_desc,
+            Allocator* gpu_allocator, Allocator* cpu_allocator);
+  Allocator* GetAllocator(AllocatorAttributes attr) override;
+  private:
+  bool force_gpu_compatible_ = false;
 };
 
 }  // namespace tensorflow

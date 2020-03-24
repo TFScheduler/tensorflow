@@ -4929,6 +4929,19 @@ py_library(
         otherwise = [],
     ),
     srcs_version = "PY2AND3",
+    deps = [":pywrap_intercept_lxx"],
+)
+
+py_library(
+    name = "pywrap_intercept_lxx",
+    srcs = [
+        "pywrap_intercept_lxx.py",
+    ] + if_static(
+        ["pywrap_dlopen_global_flags.py"],
+        # Import will fail, indicating no global dlopen flags
+        otherwise = [],
+    ),
+    srcs_version = "PY2AND3",
     deps = [":pywrap_tensorflow_internal"],
 )
 

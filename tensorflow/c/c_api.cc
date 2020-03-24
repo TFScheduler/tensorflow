@@ -2255,6 +2255,11 @@ void TF_DeleteSession(TF_Session* s, TF_Status* status) {
   delete s;
 }
 
+void TF_GPUMemFree(TF_Session* session){
+  std::cout<<"c_api.cc: TF_GPUMemFree"<<std::endl;
+  session->session->GPUMemFree();
+}
+
 void TF_SessionRun(TF_Session* session, const TF_Buffer* run_options,
                    const TF_Output* inputs, TF_Tensor* const* input_values,
                    int ninputs, const TF_Output* outputs,

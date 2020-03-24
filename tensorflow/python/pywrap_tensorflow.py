@@ -55,7 +55,8 @@ try:
     # override an RTLD_GLOBAL in _default_dlopen_flags).
     sys.setdlopenflags(_default_dlopen_flags | ctypes.RTLD_LOCAL)
 
-  from tensorflow.python.pywrap_tensorflow_internal import *
+  #from tensorflow.python.pywrap_tensorflow_internal import *
+  from tensorflow.python.pywrap_intercept_lxx import *
   from tensorflow.python.pywrap_tensorflow_internal import __version__
   from tensorflow.python.pywrap_tensorflow_internal import __git_version__
   from tensorflow.python.pywrap_tensorflow_internal import __compiler_version__
